@@ -21,7 +21,7 @@ export class Cluster extends EventEmitter {
 
 	private readonly _exitListenerFunction: (...args: any[]) => void;
 
-	constructor(options: ClusterOptions) {
+	public constructor(options: ClusterOptions) {
 		super();
 		this.id = options.id;
 		this.shards = options.shards;
@@ -58,12 +58,13 @@ export class Cluster extends EventEmitter {
 		await this.spawn();
 	}
 
-	public send(data: object) {
+	public send(data: unknown) {
 		return this.manager.ipc.node.sendTo(`Cluster ${this.id}`, data);
 	}
 
 	public async spawn() {
-		this.worker = fork({ CLUSTER_SHARDS: this.shards.join(','), CLUSTER_ID: this.id, CLUSTER_SHARD_COUNT: this.manager.shardCount, CLUSTER_CLUSTER_COUNT: this.manager.clusterCount });
+		// eslint-disable-next-line @typescript-eslint/naming-convention
+		this.worker = fork({ CLUSTER_SHARDS: this.shards.join(','), CLUSTER_ID: this.id.toString(), CLUSTER_SHARD_COUNT: this.manager.shardCount.toString(), CLUSTER_CLUSTER_COUNT: this.manager.clusterCount.toString(), ...process.env });
 
 		this.worker.once('exit', this._exitListenerFunction);
 
@@ -79,9 +80,9 @@ export class Cluster extends EventEmitter {
 		this.ready = false;
 		this.worker = undefined;
 
-		if (this.manager.respawn) this.respawn();
-
 		this.manager.emit('debug', `Worker exited with code ${code} and signal ${signal}${this.manager.respawn ? ', restarting...' : ''}`);
+
+		if (this.manager.respawn) return this.respawn();
 	}
 
 	private _waitReady(shardCount: number) {

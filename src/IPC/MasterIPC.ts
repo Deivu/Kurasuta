@@ -10,14 +10,14 @@ export class MasterIPC extends EventEmitter {
 	[key: string]: any;
 	public server: Server;
 
-	constructor(public manager: ShardingManager) {
+	public constructor(public manager: ShardingManager) {
 		super();
 		this.server = new Server('Master')
 			.on('connect', client => this.emit('debug', `Client Connected: ${client.name}`))
 			.on('disconnect', client => this.emit('debug', `Client Disconnected: ${client.name}`))
 			.on('error', error => this.emit('error', error))
 			.on('message', this._incommingMessage.bind(this));
-		if (isMaster) this.server.listen(manager.ipcSocket);
+		if (isMaster) void this.server.listen(manager.ipcSocket);
 	}
 
 	public async broadcast(code: string) {
@@ -105,15 +105,15 @@ export class MasterIPC extends EventEmitter {
 	}
 
 	private async _fetchuser(message: NodeMessage) {
-		return this._fetch(message, 'const user = this.users.get(\'{id}\'); user ? user.toJSON() : user;');
+		return this._fetch(message, 'const user = this.users.cache.get(\'{id}\'); user ? user.toJSON() : user;');
 	}
 
 	private async _fetchguild(message: NodeMessage) {
-		return this._fetch(message, 'const guild = this.guilds.get(\'{id}\'); guild ? guild.toJSON() : guild;');
+		return this._fetch(message, 'const guild = this.guilds.cache.get(\'{id}\'); guild ? guild.toJSON() : guild;');
 	}
 
 	private _fetchchannel(message: NodeMessage) {
-		return this._fetch(message, 'const channel = this.channels.get(\'{id}\'); channel ? channel.toJSON() : channel;');
+		return this._fetch(message, 'const channel = this.channels.cache.get(\'{id}\'); channel ? channel.toJSON() : channel;');
 	}
 
 	private async _fetch(message: NodeMessage, code: string) {

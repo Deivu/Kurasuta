@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { ShardingManager } from '..';
 import { Client, ClientOptions } from 'discord.js';
 import { ShardClientUtil } from '../Sharding/ShardClientUtil';
@@ -8,13 +9,12 @@ export abstract class BaseCluster {
 	public readonly client: Client;
 	public readonly id: number;
 
-	constructor(public manager: ShardingManager) {
+	public constructor(public manager: ShardingManager) {
 		const env = process.env;
 		const shards = env.CLUSTER_SHARDS!.split(',').map(Number);
 		const clientConfig: ClientOptions = Util.mergeDefault<ClientOptions>(manager.clientOptions, {
 			shards,
-			shardCount: shards.length,
-			totalShardCount: Number(env.CLUSTER_SHARD_COUNT)
+			shardCount: Number(env.CLUSTER_SHARD_COUNT)
 		});
 		this.client = new manager.client(clientConfig);
 		const client = this.client as any;
@@ -23,7 +23,7 @@ export abstract class BaseCluster {
 	}
 
 	public async init() {
-		const shardUtil = this.client.shard!;
+		const shardUtil = this.client.shard! as ShardClientUtil;
 		await shardUtil.init();
 		this.client.once('ready', () => shardUtil.send({ op: IPCEvents.READY, d: this.id }, { receptive: false }));
 		this.client.on('shardReady', id => shardUtil.send({ op: IPCEvents.SHARDREADY, d: { id: this.id, shardID: id } }, { receptive: false }));
