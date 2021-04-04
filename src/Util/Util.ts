@@ -62,7 +62,7 @@ export function isObject(input: any) {
 }
 
 export function sleep(duration: number) {
-	return new Promise((resolve) => setTimeout(resolve, duration));
+	return new Promise(resolve => setTimeout(resolve, duration));
 }
 
 export function calcShards(shards: number, guildsPerShard: number): number {
